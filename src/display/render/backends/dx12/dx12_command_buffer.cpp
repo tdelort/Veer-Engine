@@ -158,13 +158,6 @@ namespace veer::display::render
 
 	void compute_command_buffer::set_technique(compute_technique& _technique)
 	{
-		// TODO : For compute command buffers to make sense, there is more work to do
-		//  a graphics command list can call compute root signature and compute specific code but it needs to do it when a compute_technique has been set
-		//	to avoid problems when handling command lists, I should implement submit contexts
-		//	add compute/graphics technique wrapper classes handling arguments (by having an internal constant buffer)
-		//		For the argument part to make sense, I probably need a material structure (for example containing a constant buffer / structured buffer of material params)
-		//		Then the submit context sets the root descriptors (or just pass args as root constants if not too many ?) for the frame CBV and the material CBV
-		VEER_ASSERT(false, "Not implemented");
 		dx12_compute_technique& dx12_technique = static_cast<dx12_compute_technique&>(_technique);
 		get_api_handle()->SetPipelineState(dx12_technique.get_pipeline_state_object());
 		get_api_handle()->SetComputeRootSignature(dx12_technique.get_root_signature());

@@ -16,4 +16,7 @@ namespace veer::display::render
         math::vec2u m_min{0u, 0u};
         math::vec2u m_max{0u, 0u};
     };
+
+    static constexpr size_t s_max_viewport_and_scissors_count = 16u;
+    static constexpr size_t s_max_color_render_targets = 8u;
 }

@@ -1,23 +1,111 @@
 #pragma once
 
+#include <core/containers/span.h>
+#include <core/containers/static_array.h>
+#include <core/math/vec.h>
+
+
+#include <display/render/base_types.h>
+
 namespace veer::display::render
 {
     class compute_technique;
     class graphics_technique;
+    struct shader_parameter_id;
 
-    class submit_context
+    class compute_command_buffer;
+    class graphics_command_buffer;
+
+    class render_device_texture_base;
+    class render_device_texture_2d;
+    class render_device_buffer;
+    class render_device_resource;
+
+    // TODO : We could probably need a copy_submit_context, but if this is the case, there is a few things that would
+    // benefit from a schmol refactor
+
+    // I know this feels like a non owning command_buffer wrapper, (because it is :3), but its goal is to hide and
+    // simplify some boiler plate code that 90% of users won't care about (profile markers, resource transition,
+    // constant buffer handling, etc). And in the case you want the extra control, you can still get/use the underlying
+    // command buffer
+    class compute_submit_context
     {
+    public:
+        compute_submit_context(compute_command_buffer& _command_buffer, compute_technique& _technique);
+
+        template <arithmetic T>
+        void set_constant(const shader_parameter_id& _param_id, const T& _val);
+        template <arithmetic T, size_t ELEM_COUNT>
+        void set_constant(const shader_parameter_id& _param_id, const math::vec<T, ELEM_COUNT>& _val);
+        void set_texture(const shader_parameter_id& _param_id, const render_device_texture_base& _texture);
+        void set_buffer(const shader_parameter_id& _param_id, const render_device_buffer& _buffer);
+
+        // basic operations
+        void clear_texture(render_device_texture_base& _resource, math::vec4f _val);
+        void clear_texture(render_device_texture_base& _resource, math::vec4u _val);
+        void clear_buffer(render_device_buffer& _resource, float _val);
+        void clear_buffer(render_device_buffer& _resource, uint32_t _val);
+
+        void dispatch(size_t _x, size_t _y, size_t _z);
+
+    private:
+        compute_command_buffer& m_command_buffer;
     };
 
-    class compute_submit_context : public submit_context
+    class graphics_submit_context
     {
-      public:
-        compute_submit_context(compute_technique &_technique);
-    };
+    public:
+        graphics_submit_context(graphics_command_buffer& _command_buffer, graphics_technique& _technique);
 
-    class graphics_submit_context : public compute_submit_context
-    {
-      public:
-        graphics_submit_context(graphics_technique &_technique);
+        // TODO : if not too complicated, set_constant/texture/buffer should probably be in a common submit_context
+        template <arithmetic T>
+        void set_constant(const shader_parameter_id& _param_id, const T& _val);
+        template <arithmetic T, size_t ELEM_COUNT>
+        void set_constant(const shader_parameter_id& _param_id, const math::vec<T, ELEM_COUNT>& _val);
+        void set_texture(const shader_parameter_id& _param_id, const render_device_texture_base& _texture);
+        void set_buffer(const shader_parameter_id& _param_id, const render_device_buffer& _buffer);
+
+        // basic operations
+        void clear_texture(render_device_texture_base& _resource, math::vec4f _val);
+        void clear_texture(render_device_texture_base& _resource, math::vec4u _val);
+        void clear_buffer(render_device_buffer& _resource, float _val);
+        void clear_buffer(render_device_buffer& _resource, uint32_t _val);
+
+        // TODO : For submit_contexts, this might be a bit too much control ?
+        void set_render_output(render_device_texture_2d* _depth, render_device_texture_2d* _color);
+        void set_render_output(render_device_texture_2d* _depth, containers::span<render_device_texture_2d*> _colors);
+        void set_viewports(containers::span<viewport> _viewports);
+        void set_scissors(containers::span<rect> _scissor_rects);
+
+        void clear_render_target(render_device_texture_2d& _render_target_resource, math::vec4f _color);
+        void clear_depth_stencil(render_device_texture_2d& _render_target_resource, float _depth, uint8_t _stencil);
+
+        // TODO : for now, my meshes are just that (index + vertex buffer). BUT replace this when we actually have a
+        // mesh construct
+        // TODO : vertex and/or index buffer are actually optional. Change API to support this
+        void set_mesh(render_device_buffer& _index_buffer, render_device_buffer& _vertex_buffer);
+
+        void draw_instanced(size_t _vertex_count, size_t _instance_count);
+        void draw_indexed_instanced(size_t _index_count, size_t _instance_count);
+        void draw_indirect(render_device_buffer& _buffer, size_t _arg_index);
+
+    private:
+        void apply_context();
+
+    private:
+        containers::static_array<viewport, s_max_viewport_and_scissors_count> m_viewports;
+        size_t m_viewports_count;
+
+        containers::static_array<rect, s_max_viewport_and_scissors_count> m_scissors;
+        size_t m_scissors_count;
+
+        render_device_texture_2d* m_depth_render_output;
+        containers::static_array<render_device_texture_2d*, s_max_color_render_targets> m_color_render_outputs;
+        size_t m_color_render_outputs_count;
+
+        render_device_buffer* m_index_buffer; 
+        render_device_buffer* m_vertex_buffer;
+
+        graphics_command_buffer& m_command_buffer;
     };
 } // namespace veer::display::render
