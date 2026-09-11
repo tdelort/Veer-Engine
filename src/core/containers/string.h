@@ -7,7 +7,7 @@
 namespace veer::containers
 {
 	// not a specialization (using private inheritance) of resizable_array since I plan to implement short string optimisation)
-    template<typename T, system_allocator ALLOCATOR = veer::veer_system_allocator>
+    template<typename T, SystemAllocator ALLOCATOR = veer::veer_system_allocator>
 	class base_string
 	{
 	public:

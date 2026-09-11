@@ -6,7 +6,7 @@
 
 namespace veer::containers
 {
-    template <typename T, system_allocator ALLOCATOR = veer::veer_system_allocator>
+    template <typename T, SystemAllocator ALLOCATOR = veer::veer_system_allocator>
     class resizable_array
     {
     public:

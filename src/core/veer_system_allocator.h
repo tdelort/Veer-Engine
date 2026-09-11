@@ -46,6 +46,6 @@ namespace veer
         }
     };
 
-    static_assert(system_allocator<veer_system_allocator>,
+    static_assert(SystemAllocator<veer_system_allocator>,
                   "veer_system_allocator does not satifies system_allocator concept");
 } // namespace veer

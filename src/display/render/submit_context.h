@@ -1,9 +1,9 @@
 #pragma once
 
+#include <core/concepts.h>
 #include <core/containers/span.h>
 #include <core/containers/static_array.h>
 #include <core/math/vec.h>
-
 
 #include <display/render/base_types.h>
 
@@ -13,6 +13,8 @@ namespace veer::display::render
     class graphics_technique;
     struct shader_parameter_id;
 
+    class command_buffer;
+    class copy_command_buffer;
     class compute_command_buffer;
     class graphics_command_buffer;
 
@@ -24,23 +26,46 @@ namespace veer::display::render
     // TODO : We could probably need a copy_submit_context, but if this is the case, there is a few things that would
     // benefit from a schmol refactor
 
+    class submit_context
+    {
+    public:
+        submit_context(command_buffer& _command_buffer);
+
+        template <RenderDataType T>
+        void set_constant(const shader_parameter_id& _param_id, const T& _val);
+        template <RenderDataType T, size_t ELEM_COUNT>
+        void set_constant(const shader_parameter_id& _param_id, const math::vec<T, ELEM_COUNT>& _val)
+            requires veer::LessEqual<ELEM_COUNT, 4>;
+        void set_texture(const shader_parameter_id& _param_id, const render_device_texture_base& _texture);
+        void set_buffer(const shader_parameter_id& _param_id, const render_device_buffer& _buffer);
+
+    protected:
+        command_buffer& m_command_buffer;
+    };
+
+    class copy_submit_context : private submit_context
+    {
+    public:
+        copy_submit_context(copy_command_buffer& _command_buffer);
+
+    private:
+        copy_command_buffer& get_copy_command_buffer();
+    };
+
     // I know this feels like a non owning command_buffer wrapper, (because it is :3), but its goal is to hide and
     // simplify some boiler plate code that 90% of users won't care about (profile markers, resource transition,
     // constant buffer handling, etc). And in the case you want the extra control, you can still get/use the underlying
     // command buffer
-    class compute_submit_context
+    class compute_submit_context : private submit_context
     {
     public:
         compute_submit_context(compute_command_buffer& _command_buffer, compute_technique& _technique);
 
-        template <arithmetic T>
-        void set_constant(const shader_parameter_id& _param_id, const T& _val);
-        template <arithmetic T, size_t ELEM_COUNT>
-        void set_constant(const shader_parameter_id& _param_id, const math::vec<T, ELEM_COUNT>& _val);
-        void set_texture(const shader_parameter_id& _param_id, const render_device_texture_base& _texture);
-        void set_buffer(const shader_parameter_id& _param_id, const render_device_buffer& _buffer);
+        // private inheritance and choosing explicitly which basic operations are allowed on each submit context types
+        using submit_context::set_buffer;
+        using submit_context::set_constant;
+        using submit_context::set_texture;
 
-        // basic operations
         void clear_texture(render_device_texture_base& _resource, math::vec4f _val);
         void clear_texture(render_device_texture_base& _resource, math::vec4u _val);
         void clear_buffer(render_device_buffer& _resource, float _val);
@@ -49,27 +74,13 @@ namespace veer::display::render
         void dispatch(size_t _x, size_t _y, size_t _z);
 
     private:
-        compute_command_buffer& m_command_buffer;
+        compute_command_buffer& get_compute_command_buffer();
     };
 
-    class graphics_submit_context
+    class graphics_submit_context : private submit_context
     {
     public:
         graphics_submit_context(graphics_command_buffer& _command_buffer, graphics_technique& _technique);
-
-        // TODO : if not too complicated, set_constant/texture/buffer should probably be in a common submit_context
-        template <arithmetic T>
-        void set_constant(const shader_parameter_id& _param_id, const T& _val);
-        template <arithmetic T, size_t ELEM_COUNT>
-        void set_constant(const shader_parameter_id& _param_id, const math::vec<T, ELEM_COUNT>& _val);
-        void set_texture(const shader_parameter_id& _param_id, const render_device_texture_base& _texture);
-        void set_buffer(const shader_parameter_id& _param_id, const render_device_buffer& _buffer);
-
-        // basic operations
-        void clear_texture(render_device_texture_base& _resource, math::vec4f _val);
-        void clear_texture(render_device_texture_base& _resource, math::vec4u _val);
-        void clear_buffer(render_device_buffer& _resource, float _val);
-        void clear_buffer(render_device_buffer& _resource, uint32_t _val);
 
         // TODO : For submit_contexts, this might be a bit too much control ?
         void set_render_output(render_device_texture_2d* _depth, render_device_texture_2d* _color);
@@ -93,6 +104,9 @@ namespace veer::display::render
         void apply_context();
 
     private:
+        graphics_command_buffer& get_graphics_command_buffer();
+
+    private:
         containers::static_array<viewport, s_max_viewport_and_scissors_count> m_viewports;
         size_t m_viewports_count;
 
@@ -103,9 +117,9 @@ namespace veer::display::render
         containers::static_array<render_device_texture_2d*, s_max_color_render_targets> m_color_render_outputs;
         size_t m_color_render_outputs_count;
 
-        render_device_buffer* m_index_buffer; 
+        render_device_buffer* m_index_buffer;
         render_device_buffer* m_vertex_buffer;
-
-        graphics_command_buffer& m_command_buffer;
     };
 } // namespace veer::display::render
+
+#include "submit_context.hpp"

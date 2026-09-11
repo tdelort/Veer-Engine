@@ -5,23 +5,39 @@
 namespace veer
 {
     template <size_t A, size_t B>
-    concept greater_equal = A >= B;
+    concept GreaterEqual = A >= B;
 
     template <size_t A, size_t B>
-    concept greater = A > B;
+    concept Greater = A > B;
+
+    template <size_t A, size_t B>
+    concept LessEqual = A <= B;
+
+    template <size_t A, size_t B>
+    concept Less = A < B;
+
+    template <class DERIVED, class BASE>
+    concept Derives = std::is_base_of_v<BASE, DERIVED>;
 
     template <typename T>
-    concept arithmetic = std::is_arithmetic_v<T>;
+    concept Arithmetic = std::is_arithmetic_v<T>;
 
     template <typename T>
-    concept integral = std::is_integral_v<T>;
+    concept Integral = std::is_integral_v<T>;
 
     template <typename T>
-    concept floating_point = std::is_floating_point_v<T>;
+    concept FloatingPoint = std::is_floating_point_v<T>;
 
     template <typename T>
-    concept system_allocator = requires(T a, T::size_type n, T::pointer p) {
+    concept SystemAllocator = requires(T a, T::size_type n, T::pointer p) {
         { a.allocate(n) } -> std::same_as<typename T::pointer>;
         { a.deallocate(p) };
     };
+
+    // a small subset of Arithmetic to make things easier
+    template <typename T>
+    concept RenderDataType = std::disjunction_v<
+        std::is_same<T, bool>, std::is_same<T, int32_t>, std::is_same<T, int64_t>, std::is_same<T, uint32_t>,
+        std::is_same<T, uint64_t>, std::is_same<T, float>, std::is_same<T, double>>;
+
 } // namespace veer

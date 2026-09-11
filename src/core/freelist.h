@@ -6,7 +6,7 @@
 
 namespace veer
 {
-    template<typename T, system_allocator ALLOCATOR = veer_system_allocator>
+    template<typename T, SystemAllocator ALLOCATOR = veer_system_allocator>
     class freelist
     {
     public:

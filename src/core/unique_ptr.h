@@ -5,7 +5,7 @@
 
 namespace veer
 {
-    template<typename T, system_allocator ALLOCATOR = veer_system_allocator>
+    template<typename T, SystemAllocator ALLOCATOR = veer_system_allocator>
     class unique_ptr
     {
 		using pointer = T*;
@@ -50,16 +50,16 @@ namespace veer
     };
 
 
-    template<typename T, system_allocator ALLOCATOR>
+    template<typename T, SystemAllocator ALLOCATOR>
     bool operator==(const unique_ptr<T, ALLOCATOR>& _ptr, nullptr_t);
 
-    template<typename T, system_allocator ALLOCATOR>
+    template<typename T, SystemAllocator ALLOCATOR>
     bool operator==(nullptr_t, unique_ptr<T, ALLOCATOR> _ptr);
 
-    template<typename T, system_allocator ALLOCATOR>
+    template<typename T, SystemAllocator ALLOCATOR>
     bool operator!=(const unique_ptr<T, ALLOCATOR>& _ptr, nullptr_t);
 
-    template<typename T, system_allocator ALLOCATOR>
+    template<typename T, SystemAllocator ALLOCATOR>
     bool operator!=(nullptr_t, unique_ptr<T, ALLOCATOR> _ptr);
 }
 

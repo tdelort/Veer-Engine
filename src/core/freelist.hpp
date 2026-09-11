@@ -4,20 +4,20 @@
 
 namespace veer
 {
-    template<typename T, system_allocator ALLOCATOR>
+    template<typename T, SystemAllocator ALLOCATOR>
     freelist<T, ALLOCATOR>::freelist(size_t _reserve_size /*= 0u*/)
     {
         m_pool.reserve(_reserve_size);
         m_free_list.reserve(_reserve_size);
     }
 
-    template<typename T, system_allocator ALLOCATOR>
+    template<typename T, SystemAllocator ALLOCATOR>
     freelist<T, ALLOCATOR>::~freelist()
     {
         VEER_ASSERT(m_free_list.size() == m_pool.size(), "Not all freelist elements were released before releasing freelist");
     }
 
-    template<typename T, system_allocator ALLOCATOR>
+    template<typename T, SystemAllocator ALLOCATOR>
     template<typename ...ARGS>
     T* freelist<T, ALLOCATOR>::acquire(ARGS&&... _args)
     {
@@ -38,7 +38,7 @@ namespace veer
         return new(&recycled_elem) T(std::forward<ARGS>(_args)...);
     }
 
-    template<typename T, system_allocator ALLOCATOR>
+    template<typename T, SystemAllocator ALLOCATOR>
     void freelist<T, ALLOCATOR>::release(T* _ptr)
     {
         const size_t index = _ptr - m_pool.begin();
